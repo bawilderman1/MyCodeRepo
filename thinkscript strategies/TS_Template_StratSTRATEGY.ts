@@ -2,6 +2,25 @@ script entryLongCriteria {
     plot Signal = ExpAverage(close, 8) crosses above ExpAverage(close, 21);
 }
 
+script EarningsCheck {
+    #Make Sure Right Expansion is at least the amount set on `EarningsWithinBars`
+    input EarningsWithinBars = 5;
+
+    def earningsCheck = if (HasEarnings() within EarningsWithinBars bars) then 1 else 0;
+
+    plot HasEarnings = earningsCheck[-EarningsWithinBars] OR earningsCheck[0];
+}
+
+script SpxCheck {
+    input AverageLength = 200;
+
+    def spxClose = close("SPX", period = AggregationPeriod.DAY);
+    def spxMa = MovingAverage(AverageType.SIMPLE, spxClose, AverageLength);
+
+    plot SpxAboveMa = spxClose > spxMa;
+    plot SpxBelowMa = spxClose < spxMa;
+}
+
 script exitAtrCriteria {
     input OrderType = {default Long, Short};
     input Length = 14;
@@ -80,7 +99,7 @@ script exitBarsCriteria {
 
 #############################################################
 
-input StrategyName = "TrendCont";
+input StrategyName = "<StrategyName>";
 input ShareSize = 100;
 input AtrLength = 14;
 input AtrAverage = AverageType.WILDERS;
@@ -88,8 +107,11 @@ input UpFactor = 2.00;
 input DnFactor = 1.25;
 
 def entryPrice = EntryPrice();
-def longEntry = entryLongCriteria();
+def earningsEntryCheck = EarningsCheck(5).HasEarnings;
+def spxEntryCheck = SpxCheck(200).SpxAboveMa;
+def longEntry = entryLongCriteria() AND !earningsEntryCheck AND spxEntryCheck;
 
+#Enter on Close of Signal Bar
 AddOrder(
     type = OrderType.BUY_TO_OPEN, 
     condition = longEntry, 
@@ -126,8 +148,19 @@ AddOrder(
     arrowcolor = Color.DOWNTICK, 
     name = StrategyName + "_LX");
 
-plot Entry = entryPrice;
-Entry.SetDefaultColor(Color.CYAN);
+def earningsExitCheck = EarningsCheck(1).HasEarnings;
+
+AddOrder(
+    type = OrderType.SELL_TO_CLOSE, 
+    condition = earningsExitCheck, 
+    price = close[0], 
+    tradeSize = ShareSize,
+    tickcolor = Color.DOWNTICK, 
+    arrowcolor = Color.DOWNTICK, 
+    name = StrategyName + "_LX");
+
+#plot Entry = entryPrice;
+#Entry.SetDefaultColor(Color.CYAN);
 
 #plot Stop = protection;
 #Stop.SetDefaultColor(Color.PINK);
