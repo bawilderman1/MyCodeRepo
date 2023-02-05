@@ -76,16 +76,16 @@ def _night = CompoundValue(1, _night[1] + (open - close[1]) , 0);
 def _bpt1 = TruncatedBP(Period, Bandwidth, Length, _day).BPT;
 plot BPT1 = if Normalize then AutoGainCtrl(1, Period, Bandwidth, Length, _day).Normalized else _bpt1;
 BPT1.SetDefaultColor(Color.ORANGE);
-AddVerticalLine(BPT1[1] <= BPT1[2] && BPT1 > BPT1[1], "BPT1U", Color.ORANGE, Curve.Firm);
-AddVerticalLine(BPT1[1] >= BPT1[2] && BPT1 < BPT1[1], "BPT1D", Color.ORANGE, Curve.FIRM);
+#AddVerticalLine(BPT1[1] <= BPT1[2] && BPT1 > BPT1[1], "BPT1U", Color.ORANGE, Curve.Firm);
+#AddVerticalLine(BPT1[1] >= BPT1[2] && BPT1 < BPT1[1], "BPT1D", Color.ORANGE, Curve.FIRM);
 
 AddLabel(1, "Day", Color.ORANGE);
 
 def _bpt2 = TruncatedBP(Period, Bandwidth, Length, _night).BPT;
 plot BPT2 = if Normalize then AutoGainCtrl(1, Period, Bandwidth, Length, _night).Normalized else _bpt2;
 BPT2.SetDefaultColor(GetColor(1));
-AddVerticalLine(BPT2[1] <= BPT2[2] && BPT2 > BPT2[1], "BPT2U", GetColor(1), Curve.MEDIUM_DASH);
-AddVerticalLine(BPT2[1] >= BPT2[2] && BPT2 < BPT2[1], "BPT2D", GetColor(1), Curve.MEDIUM_DASH);
+#AddVerticalLine(BPT2[1] <= BPT2[2] && BPT2 > BPT2[1], "BPT2U", GetColor(1), Curve.MEDIUM_DASH);
+#AddVerticalLine(BPT2[1] >= BPT2[2] && BPT2 < BPT2[1], "BPT2D", GetColor(1), Curve.MEDIUM_DASH);
 
 AddLabel(1, "Night", GetColor(1));
 
@@ -99,3 +99,23 @@ PO.SetStyle(Curve.SHORT_DASH);
 plot MO = if (normalize) then -1 else Double.NaN;
 MO.SetDefaultColor(GetColor(3));
 MO.SetStyle(Curve.SHORT_DASH);
+
+def upSignal = (BPT1 crosses above BPT1[1] && BPT2 > 0) OR (BPT2 crosses above 0 && BPT1 > BPT1[1]);
+def long = CompoundValue(1,
+    if upSignal && long[1] != 1 then 1
+    else if long[1] == 1 && BPT1 crosses below BPT1[1] then 0
+    else long[1],
+    0);
+
+def dnSignal = (BPT1 crosses below BPT1[1] && BPT2 < 0) OR (BPT2 crosses below 0 && BPT1 < BPT1[1]);
+def short = CompoundValue(1,
+    if dnSignal && short[1] != 1 then 1
+    else if short[1] == 1 && BPT1 crosses above BPT1[1] then 0
+    else short[1],
+    0);
+
+AddVerticalLine(long[1] == 1 and long == 0, "UD", Color.UPTICK, Curve.MEDIUM_DASH);
+AddVerticalLine(short[1] == 1 and short == 0, "UD", Color.DOWNTICK, Curve.MEDIUM_DASH);
+AddVerticalLine(upSignal, "UO", Color.UPTICK, Curve.FIRM);
+AddVerticalLine(dnSignal, "DO", Color.DOWNTICK, Curve.FIRM);
+
