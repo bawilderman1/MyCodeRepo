@@ -56,8 +56,8 @@ plot "-Rms" = -Rms;
 "+Rms".SetDefaultColor(GetColor(7));
 "-Rms".SetDefaultColor(GetColor(7));
 
-AddVerticalLine(Momo crosses above 0, "U", GetColor(4), Curve.FIRM);
-AddVerticalLine(Momo crosses below 0, "D", GetColor(4), Curve.FIRM);
+AddVerticalLine(Momo crosses above Rms, "L", GetColor(4), Curve.FIRM);
+AddVerticalLine(Momo crosses below -Rms, "S", GetColor(4), Curve.FIRM);
 
-AddVerticalLine(Momo crosses above Momo[1], "U", GetColor(7), Curve.MEDIUM_DASH);
-AddVerticalLine(Momo crosses below Momo[1], "D", GetColor(7), Curve.MEDIUM_DASH);
+AddVerticalLine(Momo crosses below Rms, "C", GetColor(7), Curve.MEDIUM_DASH);
+AddVerticalLine(Momo crosses above -Rms, "C", GetColor(7), Curve.MEDIUM_DASH);

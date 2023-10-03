@@ -1,34 +1,36 @@
 declare hide_on_daily;
-#declare once_per_bar;
 
 DefineGlobalColor("pos", CreateColor(143, 239, 191));
 DefineGlobalColor("neg", CreateColor(246, 188, 179));
 
-#input AggPeriod = AggregationPeriod.FIFTEEN_MIN;
 input ShowHL = yes;
 input PaintBars = yes;
 
 def AggPeriod = AggregationPeriod.FIFTEEN_MIN;
 
-def fHigh = FundamentalType.HIGH;
-def fLow = FundamentalType.LOW;
-def fClose = FundamentalType.CLOSE;
-def fOpen = FundamentalType.OPEN;
+def openBar = SecondsFromTime(0930) >= 0 and SecondsTillTime(0945) > 0;
+def afterOpenBar = SecondsFromTime(0945) >= 0 and SecondsTillTime(1600) > 0;
 
+def rollingHigh = if openBar 
+        then GetValue(High(period=AggPeriod), 0) 
+    else if afterOpenBar and GetValue(High(period=AggPeriod), 1) > GetValue(rollingHigh, 1) 
+        then GetValue(High(period=AggPeriod), 1)
+    else GetValue(rollingHigh, 1);
+def rollingLow = if openBar 
+        then GetValue(Low(period=AggPeriod), 0) 
+    else if afterOpenBar and GetValue(Low(period=AggPeriod), 1) < GetValue(rollingLow, 1) 
+        then GetValue(Low(period=AggPeriod), 1)
+    else GetValue(rollingLow, 1);
 
-plot PrevPeriodHigh = if ShowHL then GetValue(Fundamental(fHigh, GetSymbol(), AggPeriod), 1, 1) else Double.NaN;
+plot PrevPeriodHigh = if ShowHL and afterOpenBar then rollingHigh else Double.NaN;
 PrevPeriodHigh.SetPaintingStrategy(PaintingStrategy.DASHES);
 PrevPeriodHigh.SetDefaultColor(Color.UPTICK);
 
-plot PrevPeriodLow = if ShowHL then GetValue(Fundamental(fLow, GetSymbol(), AggPeriod), 1, 1) else Double.NaN;
+plot PrevPeriodLow = if ShowHL and afterOpenBar then rollingLow else Double.NaN;
 PrevPeriodLow.SetPaintingStrategy(PaintingStrategy.DASHES);
 PrevPeriodLow.SetDefaultColor(Color.DOWNTICK);
 
-#plot PrevPeriodClose = GetValue(Fundamental(fClose, GetSymbol(), AggPeriod), 1, 1);
-#PrevPeriodClose.SetPaintingStrategy(PaintingStrategy.DASHES);
-#PrevPeriodClose.SetDefaultColor(CreateColor(153, 204, 255));
-
-plot CurrPeriodOpen = GetValue(Fundamental(fOpen, GetSymbol(), AggPeriod), 0, 0);
+plot CurrPeriodOpen = GetValue(Open(period=AggPeriod), 0, 0);
 CurrPeriodOpen.SetPaintingStrategy(PaintingStrategy.DASHES);
 CurrPeriodOpen.SetDefaultColor(Color.WHITE);
 CurrPeriodOpen.SetLineWeight(2);

@@ -107,3 +107,6 @@ WeightedAd.SetPaintingStrategy(PaintingStrategy.HISTOGRAM);
 #    (utilitiesChg * equalWt) +
 #    (realEstateChg * equalWt);
 #EqualWeighted.SetDefaultColor(GetColor(2));
+
+plot Zero = 0;
+Zero.SetDefaultColor(GetColor(3));
