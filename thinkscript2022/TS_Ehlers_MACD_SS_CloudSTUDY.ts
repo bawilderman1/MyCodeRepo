@@ -3,7 +3,8 @@ DefineGlobalColor("rain", CreateColor(110, 196, 219));
 #DefineGlobalColor("bluesy", CreateColor(0, 125, 225));
 #DefineGlobalColor("sunny", CreateColor(255, 221, 113));
 DefineGlobalColor("offgray", CreateColor(108, 108, 108));
-DefineGlobalColor("mediumYellow", CreateColor(255,221,113));
+#DefineGlobalColor("mediumYellow", CreateColor(255,221,113));
+DefineGlobalColor("sunset", CreateColor(238, 108, 77));
 
 declare upper;
 
@@ -26,15 +27,17 @@ def "-Rms" = if !IsNaN(MACD) and IsNaN(Rms) then 0 else -Rms;
 
 def posTrigger = CompoundValue(
     1,
-    if MACD crosses above 0 then 1
+    if MACD crosses above "+Rms" then 1
     else if MACD[1] crosses below "-Rms"[1] then 0
+    else if MACD < "+Rms" and MACD crosses above signal then 0
     else posTrigger[1],
     0);
 
 def negTrigger = CompoundValue(
     1,
-    if MACD crosses below 0 then 1
-    else if MACD[1] crosses above "+Rms"[1] then 0    
+    if MACD crosses below "-Rms" then 1
+    else if MACD[1] crosses above "+Rms"[1] then 0
+    else if MACD > "-Rms" and MACD crosses below signal then 0
     else negTrigger[1],
     0);
 
@@ -43,10 +46,10 @@ def ZNCross = if MACD crosses below Zero then 1 else 0;
 AssignPriceColor(if ZPCross or ZNCross then GlobalColor("faintYellow") else Color.CURRENT);
 
 def PCross = if MACD crosses above "+Rms" and negTrigger then 1 else 0;
-AssignPriceColor(if PCross then GlobalColor("mediumYellow") else Color.CURRENT);
+AssignPriceColor(if PCross then GlobalColor("sunset") else Color.CURRENT);
 
 def NCross = if MACD crosses below "-Rms" and posTrigger then 1 else 0;
-AssignPriceColor(if NCross then GlobalColor("mediumYellow") else Color.CURRENT);
+AssignPriceColor(if NCross then GlobalColor("sunset") else Color.CURRENT);
 
 def FlipDn = if MACD crosses below signal and MACD > "+Rms" then 1 else 0;
 AssignPriceColor(if FlipDn then GlobalColor("rain") else Color.CURRENT);

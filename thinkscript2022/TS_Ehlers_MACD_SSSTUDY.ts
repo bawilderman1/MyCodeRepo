@@ -1,8 +1,10 @@
-#DefineGlobalColor("buttermilk", CreateColor(255, 247, 192));
-#DefineGlobalColor("rain", CreateColor(110, 196, 219));
+DefineGlobalColor("faintYellow", CreateColor(255, 242, 153));
+DefineGlobalColor("rain", CreateColor(110, 196, 219));
 #DefineGlobalColor("bluesy", CreateColor(0, 125, 225));
 #DefineGlobalColor("sunny", CreateColor(255, 221, 113));
-#DefineGlobalColor("offgray", CreateColor(79, 79, 79));
+#DefineGlobalColor("offgray", CreateColor(108, 108, 108));
+#DefineGlobalColor("mediumYellow", CreateColor(255,221,113));
+DefineGlobalColor("sunset", CreateColor(238, 108, 77));
 
 declare lower;
 
@@ -33,8 +35,9 @@ plot "-Rms" = if !IsNaN(MACD) and IsNaN(Rms) then 0 else -Rms;
 
 def posTrigger = CompoundValue(
     1,
-    if MACD crosses above 0 then 1
+    if MACD crosses above "+Rms" then 1
     else if MACD[1] crosses below "-Rms"[1] then 0
+    else if MACD < "+Rms" and MACD crosses above signal then 0
     else posTrigger[1],
     0);
 #plot PTrig = if posTrigger then 0.5 else Double.NaN;
@@ -43,8 +46,9 @@ def posTrigger = CompoundValue(
 
 def negTrigger = CompoundValue(
     1,
-    if MACD crosses below 0 then 1
-    else if MACD[1] crosses above "+Rms"[1] then 0    
+    if MACD crosses below "-Rms" then 1
+    else if MACD[1] crosses above "+Rms"[1] then 0
+    else if MACD > "-Rms" and MACD crosses below signal then 0
     else negTrigger[1],
     0);
 #plot NTrig = if negTrigger then -0.5 else Double.NaN;
@@ -52,33 +56,21 @@ def negTrigger = CompoundValue(
 #NTrig.SetPaintingStrategy(PaintingStrategy.POINTS);
 
 plot ZCross = if MACD crosses Zero then Zero else Double.NaN;
-ZCross.SetDefaultColor(GetColor(4));
+ZCross.SetDefaultColor(GlobalColor("faintYellow"));
 ZCross.SetPaintingStrategy(PaintingStrategy.POINTS);
 
 plot PCross = if MACD crosses above "+Rms" and negTrigger then "+Rms" else Double.NaN;
-PCross.SetDefaultColor(GetColor(4));
+PCross.SetDefaultColor(GlobalColor("sunset"));
 PCross.SetPaintingStrategy(PaintingStrategy.POINTS);
 
 plot NCross = if MACD crosses below "-Rms" and posTrigger then "-Rms" else Double.NaN;
-NCross.SetDefaultColor(GetColor(4));
+NCross.SetDefaultColor(GlobalColor("sunset"));
 NCross.SetPaintingStrategy(PaintingStrategy.POINTS);
 
 plot FlipDn = if MACD crosses below signal and MACD > "+Rms" then MACD else Double.NaN;
-FlipDn.SetDefaultColor(GetColor(1));
+FlipDn.SetDefaultColor(GlobalColor("rain"));
 FlipDn.SetPaintingStrategy(PaintingStrategy.POINTS);
 
 plot FlipUp = if MACD crosses above signal and MACD < "-Rms" then MACD else Double.NaN;
-FlipUp.SetDefaultColor(GetColor(1));
+FlipUp.SetDefaultColor(GlobalColor("rain"));
 FlipUp.SetPaintingStrategy(PaintingStrategy.POINTS);
-
-
-#Quartile Estimate
-def bandLength = 125;
-def band = Round(AbsValue("+Rms" - "-Rms"), 2);
-def bandMedian = Median(band, bandLength);
-def qEst = Round(AbsValue(bandMedian / 2), 2);
-#plot Q1 = bandMedian/2;
-plot Squeeze = if band < qEst and BarNumber() > bandLength then 0 else Double.NaN;
-Squeeze.SetDefaultColor(Color.DOWNTICK);
-Squeeze.SetPaintingStrategy(PaintingStrategy.SQUARES);
-Squeeze.SetLineWeight(2);
